@@ -12,9 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
-use Symfony\Component\Security\Http\Authenticator\FormLoginAuthenticator;
 
-#[Route('/login', name: 'login')]
 class LoginController extends AbstractController
 {
     private RequestStack $requestStack;
@@ -24,9 +22,9 @@ class LoginController extends AbstractController
         $this->requestStack = $requestStack;
     }
 
-    #[Route('', name: 'login', methods: ['GET', 'POST'])]
+    #[Route('/login', name: 'login', methods: ['GET', 'POST'])]
     public function login(
-        Request $request, EntityManagerInterface $entityManager, UserAuthenticatorInterface $userAuthenticator, FormLoginAuthenticator $formLoginAuthenticator
+        Request $request, EntityManagerInterface $entityManager, UserAuthenticatorInterface $userAuthenticator
     ): Response {
         $dto = new UserLoginDTO();
         $form = $this->createForm(LoginFormType::class, $dto);
@@ -41,7 +39,7 @@ class LoginController extends AbstractController
             }
 
             $currentRequest = $this->requestStack->getCurrentRequest();
-            $userAuthenticator->authenticateUser($user, $formLoginAuthenticator, $currentRequest);
+            $userAuthenticator->authenticateUser($user, $currentRequest);
 
         }
 
