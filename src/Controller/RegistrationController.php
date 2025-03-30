@@ -13,10 +13,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api')]
 class RegistrationController extends AbstractController
 {
-    #[Route('/register', name: 'api_register', methods: ['GET', 'POST'])]
+    #[Route('/register', name: 'register', methods: ['GET', 'POST'])]
     public function register(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher, ValidatorInterface $validator): Response
     {
         $dto = new UserRegistrationDTO();
@@ -42,6 +41,7 @@ class RegistrationController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Registration successful! Please log in.');
+            return $this->redirectToRoute('login');
         }
 
         return $this->render('registration/register.html.twig', [
