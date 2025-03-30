@@ -43,6 +43,8 @@ class LoginController extends AbstractController
             $currentRequest = $this->requestStack->getCurrentRequest();
             $userAuthenticator->authenticateUser($user, $formLoginAuthenticator, $currentRequest);
 
+            return $this->redirectToRoute('dashboard');
+
         }
 
         return $this->render('login/login.html.twig', [
