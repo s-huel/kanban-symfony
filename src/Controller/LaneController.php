@@ -15,7 +15,6 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/lane')]
-#[IsGranted('ROLE_USER')]
 class LaneController extends AbstractController
 {
     #[Route('/', name: 'lane_list', methods: ['GET'])]
