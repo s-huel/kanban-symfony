@@ -65,11 +65,7 @@ class TaskController extends AbstractController
         $entityManager->persist($task);
         $entityManager->flush();
 
-        $this->activityLogService->logActivity('Task Added', $task, [
-            'id' => $task->getId(),
-            'title' => $task->getTitle(),
-            'lane_id' => $task->getId(),
-        ]);
+        $this->activityLogService->logActivity('Task Added', $task);
 
         return new JsonResponse([
             'id' => $task->getId(),
@@ -85,8 +81,8 @@ class TaskController extends AbstractController
         EntityManagerInterface $entityManager,
         LaneRepository $laneRepository,
     ): JsonResponse {
-        $oldLane = $task->getLane();
         $oldTitle = $task->getTitle();
+        $oldLaneId = $task->getLane()->getId();
 
         $task->setTitle($updateTaskRequestDTO->title);
 
@@ -99,15 +95,9 @@ class TaskController extends AbstractController
         try {
             $entityManager->flush();
 
-            $this->activityLogService->logActivity('Item Updated', $task, [
-                'title' => [
-                    'old' => $oldTitle,
-                    'new' => $updateTaskRequestDTO->title,
-                ],
-                'lane_id' => [
-                    'old' => $oldLane->getId(),
-                    'new' => $lane->getId(),
-                ],
+            $this->activityLogService->logActivity('Task Updated', $task, [
+                'title' => [$oldTitle, $task->getTitle()],
+                'lane_id' => [$oldLaneId, $task->getLane()->getId()]
             ]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Failed to update task: '.$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -135,11 +125,11 @@ class TaskController extends AbstractController
             'lane_id' => $task->getLane()->getId(),
         ]);
 
-        $entityManager->remove($task);
-        $entityManager->flush();
-
         $this->activityLogService->logActivity('Task Deleted', $task);
 
+
+        $entityManager->remove($task);
+        $entityManager->flush();
 
         return new JsonResponse(['message' => 'Lane deleted successfully'], Response::HTTP_OK);
     }

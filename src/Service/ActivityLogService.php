@@ -3,8 +3,6 @@
 namespace App\Service;
 
 use App\Entity\ActivityLog;
-use App\Entity\Lane;
-use App\Entity\Task;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -12,51 +10,82 @@ use Symfony\Component\String\UnicodeString;
 
 class ActivityLogService
 {
-    private EntityManagerInterface $entityManager;
-    private Security $security;
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private Security $security
+    ) {}
 
-    public function __construct(EntityManagerInterface $entityManager, Security $security)
-    {
-        $this->entityManager = $entityManager;
-        $this->security = $security;
-    }
-
-
-    public function logActivity(string $action, Task|Lane $entity, ?array $changes = null): void
+    public function logActivity(string $action, object $entity, ?array $changes = null): void
     {
         $activityLog = new ActivityLog();
         $activityLog->setAction($action);
-        $activityLog->setEntityType((new UnicodeString(get_class($entity)))->afterLast('\\')->toString());
+        $activityLog->setEntityType($this->getEntityType($entity));
         $activityLog->setTimestamp(new \DateTime());
-
-        $details = '';
-
-        switch ($action) {
-            case 'Deleted':
-            case 'Added':
-                $details = sprintf('Id: %d; Title: %s', $entity->getId(), $entity->getTitle());
-                break;
-
-            case 'Updated':
-                if ($changes) {
-                    $changeDetails = [];
-                    foreach ($changes as $key => [$old, $new]) {
-                        $changeDetails[] = sprintf('%s: %s -> %s', ucfirst($key), $old, $new);
-                    }
-                    $details = implode('; ', $changeDetails);
-                }
-                break;
-
-        }
-
-        $activityLog->setDetails($details);
-
-        $user = $this->security->getUser();
-        if ($user instanceof User) {
-            $activityLog->setUser($user);
-        }
+        $activityLog->setDetails($this->buildDetails($action, $entity, $changes));
+        $activityLog->setUser($this->getCurrentUser());
 
         $this->entityManager->persist($activityLog);
         $this->entityManager->flush();
+    }
+
+    private function getEntityType(object $entity): string
+    {
+        return (new UnicodeString(get_class($entity)))
+            ->afterLast('\\')
+            ->toString();
+    }
+
+    private function buildDetails(string $action, object $entity, ?array $changes): string
+    {
+        return match($action) {
+            'Deleted', 'Added' => $this->formatBasicDetails($entity),
+            'Updated' => $this->formatChangeDetails($changes),
+            default => 'Action performed'
+        };
+    }
+
+    private function formatBasicDetails(object $entity): string
+    {
+        $details = [];
+
+        if (method_exists($entity, 'getId')) {
+            $details[] = 'ID: '.$entity->getId();
+        }
+
+        if (method_exists($entity, 'getTitle')) {
+            $details[] = 'Title: '.$entity->getTitle();
+        }
+
+        return implode('; ', $details) ?: 'No details available';
+    }
+
+    private function formatChangeDetails(?array $changes): string
+    {
+        if (empty($changes)) {
+            return 'No changes recorded';
+        }
+
+        $formatted = [];
+        foreach ($changes as $property => [$old, $new]) {
+            $propertyName = $this->formatPropertyName($property);
+            $formatted[] = "$propertyName: $old → $new";
+        }
+
+        return implode('; ', $formatted);
+    }
+
+    private function formatPropertyName(string $property): string
+    {
+        return (new UnicodeString($property))
+            ->snake()
+            ->replace('_', ' ')
+            ->title()
+            ->toString();
+    }
+
+    private function getCurrentUser(): ?User
+    {
+        $user = $this->security->getUser();
+        return $user instanceof User ? $user : null;
     }
 }

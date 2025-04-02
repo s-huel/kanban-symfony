@@ -57,9 +57,7 @@ class LaneController extends AbstractController
         $entityManager->persist($lane);
         $entityManager->flush();
 
-        $this->activityLogService->logActivity('Lane Added', $lane, [
-            'title' => $lane->getTitle(),
-        ]);
+        $this->activityLogService->logActivity('Lane Added', $lane);
 
         return new JsonResponse([
             'id' => $lane->getId(),
@@ -81,16 +79,9 @@ class LaneController extends AbstractController
         try {
             $entityManager->flush();
 
-            $activityLogService->logActivity(
-                'Lane Updated',
-                $lane,
-                [
-                    'title' => [
-                        'old' => $oldTitle,
-                        'new' => $updateLaneRequestDTO->title,
-                    ],
-                ]
-            );
+            $this->activityLogService->logActivity('Lane Updated', $lane, [
+                'title' => [$oldTitle, $lane->getTitle()]
+            ]);
 
             return new JsonResponse([
                 'id' => $lane->getId(),
@@ -110,10 +101,7 @@ class LaneController extends AbstractController
             return new JsonResponse(['error' => 'Lane not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $this->activityLogService->logActivity('Lane Deleted', $lane, [
-            'id' => $lane->getId(),
-            'title' => $lane->getTitle(),
-        ]);
+        $this->activityLogService->logActivity('Lane Deleted', $lane);
 
         $entityManager->remove($lane);
         $entityManager->flush();
