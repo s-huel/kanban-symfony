@@ -22,11 +22,11 @@ class Lane
      * @var Collection<int, Task>
      */
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'lane')]
-    private Collection $tasks;
+    private Collection $item;
 
     public function __construct()
     {
-        $this->tasks = new ArrayCollection();
+        $this->item = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -49,27 +49,26 @@ class Lane
     /**
      * @return Collection<int, Task>
      */
-    public function getTasks(): Collection
+    public function getItem(): Collection
     {
-        return $this->tasks;
+        return $this->item;
     }
 
-    public function addTask(Task $task): static
+    public function addItem(Task $item): static
     {
-        if (!$this->tasks->contains($task)) {
-            $this->tasks->add($task);
-            $task->setLane($this);
+        if (!$this->item->contains($item)) {
+            $this->item->add($item);
+            $item->setLane($this);
         }
 
         return $this;
     }
 
-    public function removeTask(Task $task): static
+    public function removeItem(Task $item): static
     {
-        if ($this->tasks->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->getLane() === $this) {
-                $task->setLane(null);
+        if ($this->item->removeElement($item)) {
+            if ($item->getLane() === $this) {
+                $item->setLane(null);
             }
         }
 

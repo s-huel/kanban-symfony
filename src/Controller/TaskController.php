@@ -6,6 +6,7 @@ use App\DTO\UpdateTaskRequestDTO;
 use App\Entity\Task;
 use App\Repository\TaskRepository;
 use App\Repository\LaneRepository;
+use App\Service\ActivityLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +18,13 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/task')]
 class TaskController extends AbstractController
 {
+    private ActivityLogService $activityLogService;
+
+    public function __construct(ActivityLogService $activityLogService)
+    {
+        $this->activityLogService = $activityLogService;
+    }
+
     #[Route('/', name: 'task_list', methods: ['GET'])]
     public function index(TaskRepository $taskRepository): JsonResponse
     {
@@ -55,6 +63,12 @@ class TaskController extends AbstractController
         $entityManager->persist($task);
         $entityManager->flush();
 
+        $this->activityLogService->logActivity('Task Added', $task, [
+            'id' => $task->getId(),
+            'title' => $task->getTitle(),
+            'lane_id' => $task->getId(),
+        ]);
+
         return new JsonResponse([
             'id' => $task->getId(),
             'title' => $task->getTitle(),
@@ -69,6 +83,9 @@ class TaskController extends AbstractController
         EntityManagerInterface $entityManager,
         LaneRepository $laneRepository,
     ): JsonResponse {
+        $oldLane = $task->getLane();
+        $oldTitle = $task->getTitle();
+
         $task->setTitle($updateTaskRequestDTO->title);
 
         $lane = $laneRepository->find($updateTaskRequestDTO->lane_id);
@@ -79,6 +96,17 @@ class TaskController extends AbstractController
 
         try {
             $entityManager->flush();
+
+            $this->activityLogService->logActivity('Item Updated', $task, [
+                'title' => [
+                    'old' => $oldTitle,
+                    'new' => $updateTaskRequestDTO->title,
+                ],
+                'lane_id' => [
+                    'old' => $oldLane->getId(),
+                    'new' => $lane->getId(),
+                ],
+            ]);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => 'Failed to update task: '.$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -99,8 +127,17 @@ class TaskController extends AbstractController
             return new JsonResponse(['error' => 'Lane not found'], Response::HTTP_NOT_FOUND);
         }
 
+        $this->activityLogService->logActivity('Task Deleted', $task, [
+            'id' => $task->getId(),
+            'title' => $task->getTitle(),
+            'lane_id' => $task->getLane()->getId(),
+        ]);
+
         $entityManager->remove($task);
         $entityManager->flush();
+
+        $this->activityLogService->logActivity('Task Deleted', $task);
+
 
         return new JsonResponse(['message' => 'Lane deleted successfully'], Response::HTTP_OK);
     }
