@@ -12,8 +12,8 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/activity-logs')]
 class ActivityLogController extends AbstractController
 {
-    private $activityLogService;
-    private $entityManager;
+    private ActivityLogService $activityLogService;
+    private EntityManagerInterface $entityManager;
 
     public function __construct(ActivityLogService $activityLogService, EntityManagerInterface $entityManager)
     {

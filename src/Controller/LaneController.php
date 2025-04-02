@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\DTO\UpdateLaneRequestDTO;
 use App\Entity\Lane;
 use App\Repository\LaneRepository;
+use App\Service\ActivityLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,8 +16,16 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/lane')]
+#[IsGranted('ROLE_USER')]
 class LaneController extends AbstractController
 {
+    private ActivityLogService $activityLogService;
+
+    public function __construct(ActivityLogService $activityLogService)
+    {
+        $this->activityLogService = $activityLogService;
+    }
+
     #[Route('/', name: 'lane_list', methods: ['GET'])]
     public function index(LaneRepository $laneRepository): JsonResponse
     {
@@ -48,6 +57,10 @@ class LaneController extends AbstractController
         $entityManager->persist($lane);
         $entityManager->flush();
 
+        $this->activityLogService->logActivity('Lane Added', $lane, [
+            'title' => $lane->getTitle(),
+        ]);
+
         return new JsonResponse([
             'id' => $lane->getId(),
             'title' => $lane->getTitle(),
@@ -58,7 +71,8 @@ class LaneController extends AbstractController
     public function update(
         Lane $lane,
         #[MapRequestPayload] UpdateLaneRequestDTO $updateLaneRequestDTO,
-        EntityManagerInterface $entityManager)
+        EntityManagerInterface $entityManager,
+        ActivityLogService $activityLogService)
     {
         $oldTitle = $lane->getTitle();
 
@@ -66,6 +80,17 @@ class LaneController extends AbstractController
 
         try {
             $entityManager->flush();
+
+            $activityLogService->logActivity(
+                'Lane Updated',
+                $lane,
+                [
+                    'title' => [
+                        'old' => $oldTitle,
+                        'new' => $updateLaneRequestDTO->title,
+                    ],
+                ]
+            );
 
             return new JsonResponse([
                 'id' => $lane->getId(),
@@ -84,6 +109,11 @@ class LaneController extends AbstractController
         if (!$lane) {
             return new JsonResponse(['error' => 'Lane not found'], Response::HTTP_NOT_FOUND);
         }
+
+        $this->activityLogService->logActivity('Lane Deleted', $lane, [
+            'id' => $lane->getId(),
+            'title' => $lane->getTitle(),
+        ]);
 
         $entityManager->remove($lane);
         $entityManager->flush();
