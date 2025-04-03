@@ -7,9 +7,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
-class SecurityController extends AbstractController
+class LoginController extends AbstractController
 {
-    #[Route('/api/login', name: 'api_login', methods: ['POST'])]
+    #[Route('/api/login', name: 'login', methods: ['POST'])]
     public function login(AuthenticationUtils $authenticationUtils): JsonResponse
     {
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -33,7 +33,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    #[Route('/api/logout', name: 'logout', methods: ['POST'])]
     public function logout(): never
     {
         throw new \LogicException('This will be intercepted by the logout key on your firewall.');
