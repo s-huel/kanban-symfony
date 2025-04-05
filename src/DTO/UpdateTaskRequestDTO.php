@@ -4,6 +4,7 @@ namespace App\DTO;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
+// DTO for updating a task and lane id
 class UpdateTaskRequestDTO
 {
     #[Assert\NotBlank]

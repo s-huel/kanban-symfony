@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block body %}
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <a href="/kanban" class="nav-link">Kanban Board</a>
+        <a href="/activitylog" class="nav-link">Activity Log</a>
+        <a href="/logout" class="nav-link logout">Logout</a>
+    </nav>
+
+    <h1>Activity Log</h1>
+
+    <!-- Filter form -->
+    <form method="GET" action="{{ path('activitylog') }}">
+        <input type="text" name="action" placeholder="Filter by action" value="{{ app.request.query.get('action') }}">
+        <input type="text" name="entity_type" placeholder="Filter by entity" value="{{ app.request.query.get('entity_type') }}">
+        <button type="submit">Filter</button>
+    </form>
+
+    <!-- Activity table -->
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Details</th>
+            <th>User</th>
+            <th>Timestamp</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.action }}</td>
+                <td>{{ log.entityType }}</td>
+                <td>{{ log.details }}</td>
+                <td>{{ log.user ? log.user.email : 'Anonymous' }}</td>
+                <td>{{ log.timestamp|date('Y-m-d H:i:s') }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">No logs found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Styling the activity log page -->
+    <style>
+        /* Layout & typography */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        /* Navigation styling */
+        .navbar {
+            background-color: #2c3e50;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .nav-link:hover {
+            background-color: #34495e;
+            border-radius: 5px;
+        }
+
+        .logout {
+            background-color: #e74c3c;
+            border-radius: 5px;
+            padding: 10px 15px;
+        }
+
+        .logout:hover {
+            background-color: #c0392b;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        /* Filter form */
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Table formatting */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+{% endblock %}

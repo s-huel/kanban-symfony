@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+// All routes here are prefixed with /api/lane and protected by user
 #[Route('/api/lane')]
 #[IsGranted('ROLE_USER')]
 class LaneController extends AbstractController
@@ -26,11 +27,13 @@ class LaneController extends AbstractController
         $this->activityLogService = $activityLogService;
     }
 
+    // Fetch and return all lanes
     #[Route('/', name: 'lane_list', methods: ['GET'])]
     public function index(LaneRepository $laneRepository): JsonResponse
     {
         $lanes = $laneRepository->findAll();
 
+        // Convert lanes to plain array format
         $data = [];
         foreach ($lanes as $lane) {
             $data[] = [
@@ -42,21 +45,25 @@ class LaneController extends AbstractController
         return $this->json($data);
     }
 
+    // Create a new lane
     #[Route('/create', name: 'lane_create', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
+        // Validate the input data
         if (!$data || !isset($data['title'])) {
             return new JsonResponse(['error' => 'Invalid input'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Create + persist the new lane
         $lane = new Lane();
         $lane->setTitle($data['title']);
 
         $entityManager->persist($lane);
         $entityManager->flush();
 
+        // Log the activity to the activity logger
         $this->activityLogService->logActivity('Lane Added', $lane);
 
         return new JsonResponse([
@@ -65,6 +72,7 @@ class LaneController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    // Update an existing lane title
     #[Route('/update/{id}', name: 'lane_update', methods: ['PUT'])]
     public function update(
         Lane $lane,
@@ -74,11 +82,13 @@ class LaneController extends AbstractController
     {
         $oldTitle = $lane->getTitle();
 
+        // Update title from DTO
         $lane->setTitle($updateLaneRequestDTO->title);
 
         try {
             $entityManager->flush();
 
+            // Log the update with old and new title
             $this->activityLogService->logActivity('Lane Updated', $lane, [
                 'title' => [$oldTitle, $lane->getTitle()]
             ]);
@@ -92,6 +102,7 @@ class LaneController extends AbstractController
         }
     }
 
+    // Delete a lane
     #[Route('/delete/{id}', name: 'lane_delete', methods: ['DELETE'])]
     public function delete(int $id, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -101,6 +112,7 @@ class LaneController extends AbstractController
             return new JsonResponse(['error' => 'Lane not found'], Response::HTTP_NOT_FOUND);
         }
 
+        // Log the deletion activity
         $this->activityLogService->logActivity('Lane Deleted', $lane);
 
         $entityManager->remove($lane);

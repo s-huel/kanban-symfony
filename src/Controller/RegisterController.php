@@ -2,47 +2,46 @@
 
 namespace App\Controller;
 
-use App\DTO\RegistrationRequestDTO;
 use App\Entity\User;
+use App\Form\RegistrationFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class RegisterController extends AbstractController
 {
-    #[Route('/api/register', name: 'register', methods: ['POST'])]
-    public function register(
-        #[MapRequestPayload] RegistrationRequestDTO $registrationRequest,
+    // Displays and processes the registration form
+    #[Route('/register', name: 'register', methods: ['GET', 'POST'])]
+    public function registerForm(
+        Request $request,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager,
-        ValidatorInterface $validator
-    ): JsonResponse {
-        $errors = $validator->validate($registrationRequest);
-        if (count($errors) > 0) {
-            return $this->json($errors, 400);
-        }
-
-        if ($entityManager->getRepository(User::class)->findOneBy(['email' => $registrationRequest->email])) {
-            return $this->json(['error' => 'Email already exists'], 400);
-        }
-
+        EntityManagerInterface $entityManager
+    ): Response {
         $user = new User();
-        $user->setEmail($registrationRequest->email);
-        $user->setPassword(
-            $passwordHasher->hashPassword($user, $registrationRequest->password)
-        );
 
-        $entityManager->persist($user);
-        $entityManager->flush();
+        // Create and handle registration form
+        $form = $this->createForm(RegistrationFormType::class, $user);
+        $form->handleRequest($request);
 
-        return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles()
-        ], 201);
+        // If form is submitted and valid, hash password and save user
+        if ($form->isSubmitted() && $form->isValid()) {
+            $user->setPassword(
+                $passwordHasher->hashPassword($user, $form->get('plainPassword')->getData())
+            );
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            // Redirect to login after successful registration
+            return $this->redirectToRoute('login');
+        }
+
+        // Render the registration form
+        return $this->render('register.html.twig', [
+            'registrationForm' => $form->createView(),
+        ]);
     }
 }

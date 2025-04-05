@@ -5,6 +5,7 @@ namespace App\DTO;
 use AllowDynamicProperties;
 use Symfony\Component\Validator\Constraints as Assert;
 
+// DTO for handling user login request manually
 #[AllowDynamicProperties] class UserLoginRequestDTO
 {
     #[Assert\NotBlank]
