@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Task;
 use App\Entity\Lane;
 use App\Repository\TaskRepository;
+use App\Service\ActivityLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -45,7 +46,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/update/{id}', name: 'task_update', methods: ['PUT'])]
-    public function updateTask(int $id, Request $request): JsonResponse
+    public function updateTask(int $id, Request $request, EntityManagerInterface $entityManager, ActivityLogService $activityLogService): JsonResponse
     {
         $task = $this->taskRepository->find($id);
         if (!$task) {
@@ -56,6 +57,9 @@ class TaskController extends AbstractController
         if (!$data) {
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
         }
+
+        $oldTitle = $task->getTitle();
+        $oldLaneId = $task->getLane() ? $task->getLane()->getId() : null;
 
         if (isset($data['title'])) {
             $task->setTitle($data['title']);
@@ -70,6 +74,20 @@ class TaskController extends AbstractController
         }
 
         $this->entityManager->flush();
+
+        $changes = [];
+
+        if (isset($data['title']) && $oldTitle !== $task->getTitle()) {
+            $changes['title'] = [$oldTitle, $task->getTitle()];
+        }
+
+        if (isset($data['lane_id']) && $oldLaneId !== ($task->getLane() ? $task->getLane()->getId() : null)) {
+            $changes['lane'] = [$oldLaneId, $task->getLane() ? $task->getLane()->getId() : null];
+        }
+
+        if (!empty($changes)) {
+            $activityLogService->logActivity('Updated Task', $task, $changes);
+        }
 
         return new JsonResponse(['message' => 'Task updated successfully']);
     }

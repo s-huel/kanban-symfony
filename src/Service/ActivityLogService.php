@@ -21,6 +21,11 @@ class ActivityLogService
         $activityLog->setAction($action);
         $activityLog->setEntityType($this->getEntityType($entity));
         $activityLog->setTimestamp(new \DateTime());
+
+        if ($action === 'Updated' && empty($changes)) {
+            return;
+        }
+
         $activityLog->setDetails($this->buildDetails($action, $entity, $changes));
         $activityLog->setUser($this->getCurrentUser());
 
@@ -67,8 +72,9 @@ class ActivityLogService
 
         $formatted = [];
         foreach ($changes as $property => [$old, $new]) {
-            $propertyName = $this->formatPropertyName($property);
-            $formatted[] = "$propertyName: $old → $new";
+            if ($old !== $new) {  // Only log if value has changed
+                $formatted[] = ucfirst($property) . ": '$old' → '$new'";
+            }
         }
 
         return implode('; ', $formatted);
