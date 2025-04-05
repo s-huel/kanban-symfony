@@ -5,10 +5,12 @@
 {% block body %}
     <h1>Sign In</h1>
 
+    <!-- Flash error message -->
     {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
 
+    <!-- Login form -->
     <form method="post">
         <div class="mb-3">
             <label for="username" class="form-label">Email</label>
@@ -19,9 +21,13 @@
             <label for="password" class="form-label">Plain Password</label>
             <input type="password" id="password" name="_password" class="form-control">
         </div>
+
+        <!-- Link to registration -->
         <p class="mt-3">
             Don't have an account? <a href="{{ path('register') }}">Sign Up</a>
         </p>
+
+        <!-- Submit -->
         <button type="submit" class="btn btn-primary">Sign In</button>
     </form>
 {% endblock %}
