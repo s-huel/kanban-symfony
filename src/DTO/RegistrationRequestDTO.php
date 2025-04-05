@@ -4,6 +4,7 @@ namespace App\DTO;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
+// DTO used for API-style registration (Not Symfony Form)
 class RegistrationRequestDTO
 {
     #[Assert\NotBlank]

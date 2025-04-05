@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+// All task routes are under /api/task and requires to be a user
 #[Route('/api/task')]
 #[IsGranted('ROLE_USER')]
 class TaskController extends AbstractController
@@ -22,19 +23,24 @@ class TaskController extends AbstractController
         private TaskRepository $taskRepository
     ) {}
 
+    // Creates a new task and assigns it to a lane
     #[Route('/create', name: 'task_create', methods: ['POST'])]
     public function createTask(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        // Basic input validation
         if (!$data || !isset($data['title'], $data['lane_id'])) {
             return new JsonResponse(['error' => 'Invalid input'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
+        // Fetch the target lane
         $lane = $this->entityManager->getRepository(Lane::class)->find($data['lane_id']);
         if (!$lane) {
             return new JsonResponse(['error' => 'Lane not found'], JsonResponse::HTTP_NOT_FOUND);
         }
 
+        // Create + save new task
         $task = new Task();
         $task->setTitle($data['title']);
         $task->setLane($lane);
@@ -45,6 +51,7 @@ class TaskController extends AbstractController
         return new JsonResponse(['message' => 'Task created successfully'], JsonResponse::HTTP_CREATED);
     }
 
+    // Updates an existing task (title or lane)
     #[Route('/update/{id}', name: 'task_update', methods: ['PUT'])]
     public function updateTask(int $id, Request $request, EntityManagerInterface $entityManager, ActivityLogService $activityLogService): JsonResponse
     {
@@ -58,13 +65,16 @@ class TaskController extends AbstractController
             return new JsonResponse(['error' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
+        // Track changes for activity log
         $oldTitle = $task->getTitle();
         $oldLaneId = $task->getLane() ? $task->getLane()->getId() : null;
 
+        // Update task title if provided
         if (isset($data['title'])) {
             $task->setTitle($data['title']);
         }
 
+        // Update lane if provided
         if (isset($data['lane_id'])) {
             $lane = $this->entityManager->getRepository(Lane::class)->find($data['lane_id']);
             if (!$lane) {
@@ -75,8 +85,8 @@ class TaskController extends AbstractController
 
         $this->entityManager->flush();
 
+        // Detect changes and log them
         $changes = [];
-
         if (isset($data['title']) && $oldTitle !== $task->getTitle()) {
             $changes['title'] = [$oldTitle, $task->getTitle()];
         }
@@ -92,6 +102,7 @@ class TaskController extends AbstractController
         return new JsonResponse(['message' => 'Task updated successfully']);
     }
 
+    // Deletes a task
     #[Route('/delete/{id}', name: 'task_delete', methods: ['DELETE'])]
     public function deleteTask(int $id): JsonResponse
     {

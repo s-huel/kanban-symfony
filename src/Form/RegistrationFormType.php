@@ -12,16 +12,20 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Length;
 
+// Symfony form for registration user in controller
 class RegistrationFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            // Email input with basic "required" validation
             ->add('email', EmailType::class, [
                 'constraints' => [
                     new NotBlank(['message' => 'Email is required']),
                 ],
             ])
+
+            // Plaintext password, not mapped to User entity directly
             ->add('plainPassword', PasswordType::class, [
                 'mapped' => false,
                 'constraints' => [
@@ -32,11 +36,14 @@ class RegistrationFormType extends AbstractType
                     ]),
                 ],
             ])
+
+            // Submit button
             ->add('register', SubmitType::class, ['label' => 'Sign Up']);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
+        // Links this form to the User entity
         $resolver->setDefaults([
             'data_class' => User::class,
         ]);
