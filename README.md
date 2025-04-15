@@ -14,7 +14,7 @@ The app includes an activity log to track user actions.
 # Tech Stack
 - Backend: Symfony (PHP Framework)
 - Database: MySQL, Doctrine (ORM)
-- Frontend: Twig (Template Engine)
+- Frontend: Twig (Template Engine), JavaScript (fetching and drag-and-drop)
 
 # Installation
 
