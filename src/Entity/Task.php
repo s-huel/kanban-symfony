@@ -26,18 +26,12 @@ class Task
     #[ORM\JoinColumn(name: 'priority_id', referencedColumnName: 'id', nullable: false)]
     private ?Priority $priority = null;
 
-    /**
-     * @var Collection<int, Tag>
-     */
-    #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'tasks')]
-    #[ORM\JoinTable(name: 'tag_task')]
-    #[ORM\JoinColumn(name: 'task_id', referencedColumnName: 'id', nullable: false)]
-    #[ORM\InverseJoinColumn(name: 'tag_id', referencedColumnName: 'id', nullable: false)]
-    private Collection $tags;
+    #[ORM\OneToMany(mappedBy: 'task', targetEntity: TagTask::class, cascade: ['persist', 'remove'])]
+    private Collection $tagTasks;
 
     public function __construct()
     {
-        $this->tags = new ArrayCollection();
+        $this->tagTasks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -78,28 +72,57 @@ class Task
         return $this;
     }
 
-    /**
-     * @return Collection<int, Tag>
-     */
-    public function getTags(): Collection
+    public function getTagTasks(): Collection
     {
-        return $this->tags;
+        return $this->tagTasks;
     }
 
-    public function addTag(Tag $tag): static
+    public function addTagTask(TagTask $tagTask): static
     {
-        if (!$this->tags->contains($tag)) {
-            $this->tags->add($tag);
-            $tag->addTask($this);
+        if (!$this->tagTasks->contains($tagTask)) {
+            $this->tagTasks->add($tagTask);
+            $tagTask->setTask($this);
         }
         return $this;
     }
 
-    public function removeTag(Tag $tag): static
+    public function removeTagTask(TagTask $tagTask): static
     {
-        if ($this->tags->removeElement($tag)) {
-            $tag->removeTask($this);
+        if ($this->tagTasks->removeElement($tagTask)) {
+            if ($tagTask->getTask() === $this) {
+                $tagTask->setTask(null);
+            }
         }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TagTask>
+     */
+    public function getTag(): Collection
+    {
+        return $this->tag;
+    }
+
+    public function addTag(TagTask $tag): static
+    {
+        if (!$this->tag->contains($tag)) {
+            $this->tag->add($tag);
+            $tag->setTask($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(TagTask $tag): static
+    {
+        if ($this->tag->removeElement($tag)) {
+            // set the owning side to null (unless already changed)
+            if ($tag->getTask() === $this) {
+                $tag->setTask(null);
+            }
+        }
+
         return $this;
     }
 }
