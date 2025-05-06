@@ -21,12 +21,12 @@ class Priority
     /**
      * @var Collection<int, Task>
      */
-    #[ORM\ManyToMany(targetEntity: Task::class, inversedBy: 'priorities')]
-    private Collection $task;
+    #[ORM\OneToMany(mappedBy: 'priority', targetEntity: Task::class, cascade: ['persist', 'remove'])]
+    private Collection $tasks;
 
     public function __construct()
     {
-        $this->task = new ArrayCollection();
+        $this->tasks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -42,31 +42,34 @@ class Priority
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
     /**
      * @return Collection<int, Task>
      */
-    public function getTask(): Collection
+    public function getTasks(): Collection
     {
-        return $this->task;
+        return $this->tasks;
     }
 
     public function addTask(Task $task): static
     {
-        if (!$this->task->contains($task)) {
-            $this->task->add($task);
+        if (!$this->tasks->contains($task)) {
+            $this->tasks->add($task);
+            $task->setPriority($this);
         }
-
         return $this;
     }
 
     public function removeTask(Task $task): static
     {
-        $this->task->removeElement($task);
-
+        if ($this->tasks->removeElement($task)) {
+            // Set the owning side to null (unless already changed)
+            if ($task->getPriority() === $this) {
+                $task->setPriority(null);
+            }
+        }
         return $this;
     }
 }

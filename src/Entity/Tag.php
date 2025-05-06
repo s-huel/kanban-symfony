@@ -21,12 +21,12 @@ class Tag
     /**
      * @var Collection<int, Task>
      */
-    #[ORM\ManyToMany(targetEntity: Task::class, inversedBy: 'tags')]
-    private Collection $task;
+    #[ORM\ManyToMany(targetEntity: Task::class, mappedBy: 'tags')]
+    private Collection $tasks;
 
     public function __construct()
     {
-        $this->task = new ArrayCollection();
+        $this->tasks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -42,31 +42,28 @@ class Tag
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
     /**
      * @return Collection<int, Task>
      */
-    public function getTask(): Collection
+    public function getTasks(): Collection
     {
-        return $this->task;
+        return $this->tasks;
     }
 
     public function addTask(Task $task): static
     {
-        if (!$this->task->contains($task)) {
-            $this->task->add($task);
+        if (!$this->tasks->contains($task)) {
+            $this->tasks->add($task);
         }
-
         return $this;
     }
 
     public function removeTask(Task $task): static
     {
-        $this->task->removeElement($task);
-
+        $this->tasks->removeElement($task);
         return $this;
     }
 }

@@ -22,21 +22,21 @@ class Task
     #[ORM\JoinColumn(nullable: false)]
     private ?Lane $lane = null;
 
-    /**
-     * @var Collection<int, Priority>
-     */
-    #[ORM\ManyToMany(targetEntity: Priority::class, mappedBy: 'task')]
-    private Collection $priorities;
+    #[ORM\ManyToOne(targetEntity: Priority::class, inversedBy: 'tasks')]
+    #[ORM\JoinColumn(name: 'priority_id', referencedColumnName: 'id', nullable: false)]
+    private ?Priority $priority = null;
 
     /**
      * @var Collection<int, Tag>
      */
-    #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'task')]
+    #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'tasks')]
+    #[ORM\JoinTable(name: 'tag_task')]
+    #[ORM\JoinColumn(name: 'task_id', referencedColumnName: 'id', nullable: false)]
+    #[ORM\InverseJoinColumn(name: 'tag_id', referencedColumnName: 'id', nullable: false)]
     private Collection $tags;
 
     public function __construct()
     {
-        $this->priorities = new ArrayCollection();
         $this->tags = new ArrayCollection();
     }
 
@@ -53,7 +53,6 @@ class Task
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
@@ -65,34 +64,17 @@ class Task
     public function setLane(?Lane $lane): static
     {
         $this->lane = $lane;
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, Priority>
-     */
-    public function getPriorities(): Collection
+    public function getPriority(): ?Priority
     {
-        return $this->priorities;
+        return $this->priority;
     }
 
-    public function addPriority(Priority $priority): static
+    public function setPriority(?Priority $priority): static
     {
-        if (!$this->priorities->contains($priority)) {
-            $this->priorities->add($priority);
-            $priority->addTask($this);
-        }
-
-        return $this;
-    }
-
-    public function removePriority(Priority $priority): static
-    {
-        if ($this->priorities->removeElement($priority)) {
-            $priority->removeTask($this);
-        }
-
+        $this->priority = $priority;
         return $this;
     }
 
@@ -110,7 +92,6 @@ class Task
             $this->tags->add($tag);
             $tag->addTask($this);
         }
-
         return $this;
     }
 
@@ -119,7 +100,6 @@ class Task
         if ($this->tags->removeElement($tag)) {
             $tag->removeTask($this);
         }
-
         return $this;
     }
 }
