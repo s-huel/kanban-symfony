@@ -70,7 +70,7 @@ The Kanban Board has four entities: User, Lane, Task and ActivityLog.
   - The user can edit the task name by clicking on the "Edit" button of a task.
   - The user can delete the task by clicking on the "Delete" button of a task.
   - The user can move the task to an another lane drag-and-drop.
-  - User can add priority label to the task (Is added while creating task, can be removed or updated).
+  - User can add priority label to the task (is added while creating task, can be removed or updated and added again).
 4. **ActivityLog**: 
   - The user can see the activity log by clicking on the "Activity Log" button inside of the navigation bar.
   - The activity log shows the history of changes made to tasks and lanes.

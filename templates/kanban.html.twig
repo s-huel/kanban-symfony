@@ -159,7 +159,7 @@
 
         // Edit priority label by prompting new priority ID and PUT request
         function editPriorityLabel(taskId) {
-            const newPriorityId = prompt("Enter new priority ID (1 = Low, 2 = Medium, 3 = High):");
+            const newPriorityId = prompt("Enter new priority ID (1 = Low, 3 = Medium, 4 = High):");
             if (!newPriorityId) return;
 
             fetch(`/api/task/${taskId}/update-priority`, {
@@ -171,7 +171,7 @@
 
         // Add priority label by prompting priority ID and POST request
         function addPriorityLabel(taskId) {
-            const priorityId = prompt("Enter priority ID (1 = Low, 2 = Medium, 3 = High):");
+            const priorityId = prompt("Enter priority ID (1 = Low, 3 = Medium, 4 = High):");
             if (!priorityId) return;
 
             fetch(`/api/task/${taskId}/add-priority`, {
