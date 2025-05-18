@@ -20,37 +20,44 @@ final class Version20250506092644 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql(<<<'SQL'
-            ALTER TABLE tag_task ADD id INT AUTO_INCREMENT NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id)
-        SQL);
-        $this->addSql(<<<'SQL'
-            ALTER TABLE task ADD CONSTRAINT FK_527EDB25497B19F9 FOREIGN KEY (priority_id) REFERENCES priority (id)
-        SQL);
-        $this->addSql(<<<'SQL'
-            CREATE INDEX IDX_527EDB25497B19F9 ON task (priority_id)
-        SQL);
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE tag_task ADD id INT AUTO_INCREMENT NOT NULL, DROP PRIMARY KEY, ADD PRIMARY KEY (id)
+        // SQL);
+
+        // Commenting out the foreign key creation since it already exists
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE task ADD CONSTRAINT FK_527EDB25497B19F9 FOREIGN KEY (priority_id) REFERENCES priority (id)
+        // SQL);
+
+        // Commenting out the index creation since it already exists
+        // $this->addSql(<<<'SQL'
+        //     CREATE INDEX IDX_527EDB25497B19F9 ON task (priority_id)
+        // SQL);
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql(<<<'SQL'
-            ALTER TABLE tag_task MODIFY id INT NOT NULL
-        SQL);
-        $this->addSql(<<<'SQL'
-            DROP INDEX `PRIMARY` ON tag_task
-        SQL);
-        $this->addSql(<<<'SQL'
-            ALTER TABLE tag_task DROP id
-        SQL);
-        $this->addSql(<<<'SQL'
-            ALTER TABLE tag_task ADD PRIMARY KEY (task_id, tag_id)
-        SQL);
-        $this->addSql(<<<'SQL'
-            ALTER TABLE task DROP FOREIGN KEY FK_527EDB25497B19F9
-        SQL);
-        $this->addSql(<<<'SQL'
-            DROP INDEX IDX_527EDB25497B19F9 ON task
-        SQL);
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE tag_task MODIFY id INT NOT NULL
+        // SQL);
+        // $this->addSql(<<<'SQL'
+        //     DROP INDEX `PRIMARY` ON tag_task
+        // SQL);
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE tag_task DROP id
+        // SQL);
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE tag_task ADD PRIMARY KEY (task_id, tag_id)
+        // SQL);
+
+        // Commenting out the foreign key removal since it already exists
+        // $this->addSql(<<<'SQL'
+        //     ALTER TABLE task DROP FOREIGN KEY FK_527EDB25497B19F9
+        // SQL);
+        // Commenting out the index removal since it already exists
+        // $this->addSql(<<<'SQL'
+        //     DROP INDEX IDX_527EDB25497B19F9 ON task
+        // SQL);
     }
 }

@@ -18,15 +18,12 @@ class Lane
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    /**
-     * @var Collection<int, Task>
-     */
-    #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'lane')]
-    private Collection $item;
+    #[ORM\OneToMany(mappedBy: 'lane', targetEntity: Task::class, cascade: ['persist', 'remove'])]
+    private Collection $tasks;
 
     public function __construct()
     {
-        $this->item = new ArrayCollection();
+        $this->tasks = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -42,36 +39,29 @@ class Lane
     public function setTitle(string $title): static
     {
         $this->title = $title;
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, Task>
-     */
-    public function getItem(): Collection
+    public function getTasks(): Collection
     {
-        return $this->item;
+        return $this->tasks;
     }
 
-    public function addItem(Task $item): static
+    public function addTask(Task $task): static
     {
-        if (!$this->item->contains($item)) {
-            $this->item->add($item);
-            $item->setLane($this);
+        if (!$this->tasks->contains($task)) {
+            $this->tasks->add($task);
+            $task->setLane($this);
         }
-
         return $this;
     }
 
-    public function removeItem(Task $item): static
+    public function removeTask(Task $task): static
     {
-        if ($this->item->removeElement($item)) {
-            if ($item->getLane() === $this) {
-                $item->setLane(null);
-            }
+        if ($this->tasks->removeElement($task) && $task->getLane() === $this) {
+            $task->setLane(null);
         }
-
         return $this;
     }
 }
+

@@ -3,53 +3,69 @@
 {% block title %}Kanban Board{% endblock %}
 
 {% block body %}
-    <!-- Navbar for navigation -->
+    <!-- Navbar with navigation links -->
     <nav class="navbar">
         <a href="/kanban" class="nav-link">Kanban Board</a>
         <a href="/activitylog" class="nav-link">Activity Log</a>
         <a href="/logout" class="nav-link logout">Logout</a>
     </nav>
 
-    <!-- Kanban board container -->
+    <!-- Main Kanban board container -->
     <div class="kanban-board">
+        {# Loop through each lane to create columns on the board #}
         {% for lane in lanes %}
-            <!-- Loop through each lane and display its content -->
             <div class="kanban-lane" id="lane-{{ lane.id }}">
                 <div class="lane-header">
-                    <!-- Lane title and actions -->
                     <h2>{{ lane.title }}</h2>
                     <div class="lane-actions">
+                        <!-- Edit and delete lane buttons -->
                         <button class="edit-btn" onclick="editLane({{ lane.id }})">✏️ Edit</button>
                         <button class="delete-btn" onclick="deleteLane({{ lane.id }})">🗑️ Delete</button>
                     </div>
                 </div>
 
                 <div class="lane-tasks">
-                    <!-- Loop through each task and display it in the corresponding lane -->
+                    {# Loop through all tasks #}
                     {% for task in tasks %}
+                        {# Show only tasks that belong to the current lane #}
                         {% if task.lane.id == lane.id %}
                             <div class="kanban-task" id="task-{{ task.id }}" draggable="true">
-                                <!-- Task title and actions -->
                                 <p>{{ task.title }}</p>
+
+                                {# Priority label and controls if task has priority #}
+                                {% if task.priority %}
+                                    <span class="priority-label" style="background-color: {{ task.priority.color }};">
+                                        {{ task.priority.title }}
+                                        <button class="remove-priority" onclick="removePriority({{ task.id }})">✕</button>
+                                        <button class="edit-priority" onclick="editPriorityLabel({{ task.id }})">✎</button>
+                                    </span>
+                                {% else %}
+                                    <!-- Button to add priority if none set -->
+                                    <button class="add-priority" onclick="addPriorityLabel({{ task.id }})">Add Priority</button>
+                                {% endif %}
+
+                                <!-- Edit and delete task buttons -->
                                 <button class="edit-btn" onclick="editTask({{ task.id }})">Edit</button>
                                 <button class="delete-btn" onclick="deleteTask({{ task.id }})">Delete</button>
-                                <button class="move-btn" onclick="moveTask({{ task.id }}, {{ lane.id }})">Move</button>
                             </div>
                         {% endif %}
                     {% endfor %}
                 </div>
 
-                <!-- Add new task button -->
+                <!-- Button to add a new task inside this lane -->
                 <button onclick="addTask({{ lane.id }})">+ Add Task</button>
             </div>
         {% endfor %}
-        <!-- Add new lane button -->
+
+        <!-- Button to add a new lane (column) to the board -->
         <button class="add-lane-btn" onclick="addLane()">➕ Add Lane</button>
     </div>
 
-    <!-- JavaScript for various actions on the board -->
     <script>
-        // Edit lane title
+        // JSON encoded priorities from backend for JS use
+        const priorities = {{ priorities|json_encode|raw }};
+
+        // Edit lane title with prompt and PUT request
         async function editLane(laneId) {
             const newTitle = prompt("Enter new lane title:");
             if (!newTitle) return;
@@ -58,29 +74,23 @@
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: newTitle }),
-            });w
+            });
 
-            if (response.ok) {
-                location.reload(); // Reload to reflect changes
-            } else {
-                alert("Failed to update lane.");
-            }
+            if (response.ok) location.reload();
+            else alert("Failed to update lane.");
         }
 
-        // Delete lane
+        // Confirm and delete lane via DELETE request
         async function deleteLane(laneId) {
             if (!confirm("Are you sure you want to delete this lane?")) return;
 
             const response = await fetch(`/api/lane/delete/${laneId}`, { method: "DELETE" });
 
-            if (response.ok) {
-                location.reload(); // Reload to reflect changes
-            } else {
-                alert("Failed to delete lane.");
-            }
+            if (response.ok) location.reload();
+            else alert("Failed to delete lane.");
         }
 
-        // Add a new lane
+        // Add new lane by prompting title and POST request
         async function addLane() {
             const title = prompt("Enter lane title:");
             if (!title) return;
@@ -91,98 +101,136 @@
                 body: JSON.stringify({ title }),
             });
 
-            if (response.ok) {
-                location.reload(); // Reload to reflect changes
-            } else {
-                alert("Failed to add lane.");
-            }
+            if (response.ok) location.reload();
+            else alert("Failed to add lane.");
         }
 
-        // Edit task title
+        // Edit task title by prompting and PUT request
         function editTask(id) {
             let newTitle = prompt("Enter new task title:");
             if (newTitle) {
                 fetch(`/api/task/update/${id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: newTitle })
-                }).then(() => location.reload()); // Reload to reflect changes
+                    body: JSON.stringify({ title: newTitle }),
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert("Failed to update task.");
+                    }
+                });
             }
         }
 
-        // Delete task
+        // Confirm and delete task via DELETE request
         function deleteTask(id) {
             if (confirm("Are you sure you want to delete this task?")) {
                 fetch(`/api/task/delete/${id}`, { method: "DELETE" })
-                    .then(() => location.reload()); // Reload to reflect changes
+                    .then(() => location.reload());
             }
         }
 
-        // Add a new task to a lane
-        function addTask(laneId) {
+        // Add new task inside a lane with prompts and POST request
+        async function addTask(laneId) {
             let title = prompt("Enter task title:");
-            if (title) {
-                fetch(`/api/task/create`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title, lane_id: laneId })
-                }).then(() => location.reload()); // Reload to reflect changes
+            if (!title) return;
+
+            let priorityId = prompt("Enter priority ID (1 = Low, 3 = Medium, 4 = High):");
+            if (!priorityId) return;
+
+            const response = await fetch("/api/task/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, lane_id: laneId, priority_id: priorityId }),
+            });
+
+            if (response.ok) location.reload();
+            else alert("Failed to add task.");
+        }
+
+        // Remove priority label from task with confirmation
+        function removePriority(taskId) {
+            if (confirm("Remove priority label?")) {
+                fetch(`/api/task/${taskId}/remove-priority`, { method: "DELETE" })
+                    .then(() => location.reload());
             }
         }
 
-        // Move task to a different lane
-        function moveTask(id, currentLaneId) {
-            let newLaneId = prompt("Enter new lane ID:");
-            if (newLaneId && newLaneId !== currentLaneId) {
-                fetch(`/api/task/update/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lane_id: newLaneId })
-                }).then(() => location.reload()); // Reload to reflect changes
-            }
+        // Edit priority label by prompting new priority ID and PUT request
+        function editPriorityLabel(taskId) {
+            const newPriorityId = prompt("Enter new priority ID (1 = Low, 2 = Medium, 3 = High):");
+            if (!newPriorityId) return;
+
+            fetch(`/api/task/${taskId}/update-priority`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ priority_id: newPriorityId }),
+            }).then(() => location.reload());
         }
 
-        // Event listeners for drag and drop functionality
-        document.addEventListener("DOMContentLoaded", function () {
-            let tasks = document.querySelectorAll(".kanban-task");
-            let lanes = document.querySelectorAll(".kanban-lane");
+        // Add priority label by prompting priority ID and POST request
+        function addPriorityLabel(taskId) {
+            const priorityId = prompt("Enter priority ID (1 = Low, 2 = Medium, 3 = High):");
+            if (!priorityId) return;
 
+            fetch(`/api/task/${taskId}/add-priority`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ priority_id: priorityId }),
+            }).then(() => location.reload());
+        }
+
+        // Drag & drop setup after DOM content loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const tasks = document.querySelectorAll('.kanban-task');
+            const lanes = document.querySelectorAll('.kanban-lane');
+
+            // Make tasks draggable
             tasks.forEach(task => {
-                task.setAttribute("draggable", "true");
-                task.addEventListener("dragstart", dragStart);
+                task.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', task.id);
+                });
             });
 
+            // Setup lanes to allow drops
             lanes.forEach(lane => {
-                lane.addEventListener("dragover", dragOver);
-                lane.addEventListener("drop", drop);
+                lane.addEventListener('dragover', e => {
+                    e.preventDefault(); // needed to allow drop
+                });
+
+                // Handle dropping tasks into lanes and update backend
+                lane.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    const taskIdRaw = e.dataTransfer.getData('text/plain'); // e.g. "task-3"
+                    const taskId = taskIdRaw.split('-')[1]; // extract "3"
+                    const laneId = lane.id.split('-')[1];  // extract lane id
+
+                    console.log('Dropping task:', taskId, 'to lane:', laneId);
+
+                    // Update task's lane_id in backend
+                    const response = await fetch(`/api/task/update/${taskId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lane_id: laneId }),
+                    });
+
+                    if (response.ok) {
+                        console.log('Move successful');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        console.error('Move failed:', error);
+                        alert('Failed to move task: ' + (error.error || 'Unknown error'));
+                    }
+                });
+
             });
-
-            // Drag start event handler
-            function dragStart(event) {
-                event.dataTransfer.setData("taskId", event.target.id.split("-")[1]);
-            }
-
-            // Allow task to be dropped in a new lane
-            function dragOver(event) {
-                event.preventDefault();
-            }
-
-            // Drop the task in the new lane
-            function drop(event) {
-                event.preventDefault();
-                let taskId = event.dataTransfer.getData("taskId");
-                let newLaneId = event.target.closest(".kanban-lane").id.split("-")[1];
-
-                fetch(`/api/task/update/${taskId}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lane_id: newLaneId })
-                }).then(() => location.reload()); // Reload to reflect changes
-            }
         });
+
     </script>
 
-    <!-- CSS Styles -->
+    <!-- CSS Styles: Worst styling seen to the human eye -->
     <style>
         /* Navbar styling */
         .navbar {
@@ -322,5 +370,24 @@
             color: white;
         }
 
+        .priority-label {
+            color: #fff;
+            padding: 1px 2px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .priority-label button {
+            background: transparent;
+            border: none;
+            color: #fff;
+            margin-left: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
     </style>
 {% endblock %}

@@ -13,11 +13,11 @@ class TagTask
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'tag')]
+    #[ORM\ManyToOne(targetEntity: Task::class, inversedBy: 'tagTasks')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Task $task = null;
 
-    #[ORM\ManyToOne(inversedBy: 'task')]
+    #[ORM\ManyToOne(targetEntity: Tag::class, inversedBy: 'tagTasks')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Tag $tag = null;
 
@@ -34,7 +34,6 @@ class TagTask
     public function setTask(?Task $task): static
     {
         $this->task = $task;
-
         return $this;
     }
 
@@ -46,7 +45,6 @@ class TagTask
     public function setTag(?Tag $tag): static
     {
         $this->tag = $tag;
-
         return $this;
     }
 }

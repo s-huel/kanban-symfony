@@ -58,41 +58,9 @@ class Tag
 
     public function removeTagTask(TagTask $tagTask): static
     {
-        if ($this->tagTasks->removeElement($tagTask)) {
-            if ($tagTask->getTag() === $this) {
-                $tagTask->setTag(null);
-            }
+        if ($this->tagTasks->removeElement($tagTask) && $tagTask->getTag() === $this) {
+            $tagTask->setTag(null);
         }
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, TagTask>
-     */
-    public function getTask(): Collection
-    {
-        return $this->task;
-    }
-
-    public function addTask(TagTask $task): static
-    {
-        if (!$this->task->contains($task)) {
-            $this->task->add($task);
-            $task->setTag($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTask(TagTask $task): static
-    {
-        if ($this->task->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->getTag() === $this) {
-                $task->setTag(null);
-            }
-        }
-
         return $this;
     }
 }

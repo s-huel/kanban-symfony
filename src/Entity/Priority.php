@@ -15,13 +15,16 @@ class Priority
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $title = null;
+
+    #[ORM\Column(length: 7, nullable: true)]
+    private ?string $color = null;
 
     /**
      * @var Collection<int, Task>
      */
-    #[ORM\OneToMany(mappedBy: 'priority', targetEntity: Task::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'priority', targetEntity: Task::class)]
     private Collection $tasks;
 
     public function __construct()
@@ -45,6 +48,17 @@ class Priority
         return $this;
     }
 
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(?string $color): static
+    {
+        $this->color = $color;
+        return $this;
+    }
+
     /**
      * @return Collection<int, Task>
      */
@@ -59,17 +73,28 @@ class Priority
             $this->tasks->add($task);
             $task->setPriority($this);
         }
+
         return $this;
     }
 
     public function removeTask(Task $task): static
     {
         if ($this->tasks->removeElement($task)) {
-            // Set the owning side to null (unless already changed)
             if ($task->getPriority() === $this) {
                 $task->setPriority(null);
             }
         }
+
         return $this;
+    }
+
+    /**
+     * Check if the priority can be deleted.
+     *
+     * @return bool
+     */
+    public function canDelete(): bool
+    {
+        return $this->tasks->isEmpty();
     }
 }

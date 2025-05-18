@@ -104,17 +104,15 @@ Because of this I still need to change a lot for it to be exactly as I want it t
  - Description: Allow users to add comments to tasks for better collaboration.
 7. Task due dates & calendar integration
  - Description: Implement due dates for tasks and integrate with a calendar for better task management.
-8. Task labels, priorities & tags
-    - Description: Allow users to categorize tasks with labels, priorities, and tags for better organization.
-9. Checklists within tasks
+8. Checklists within tasks
  - Description: Allow users to create checklists within tasks for better task management.
-10. Task attachments
+9. Task attachments
  - Description: Allow users to attach files to tasks for better documentation.
-11. Real-time syncing
+10. Real-time syncing
  - Description: Implement real-time syncing of tasks and lanes across multiple devices.
-12. Dark mode
+11. Dark mode
  - Description: Implement a dark mode for better user experience.
-13. Kanban board templates
-    - Description: Provide pre-defined templates for different types of Kanban boards.
-14. Sprint Boards
-    - Description: Implement a sprint board for agile project management.
+12. Kanban board templates
+ - Description: Provide pre-defined templates for different types of Kanban boards. 
+13. Sprint Boards
+ - Description: Implement a sprint board for agile project management.
