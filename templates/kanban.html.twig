@@ -44,6 +44,21 @@
                                     <button class="add-priority" onclick="addPriorityLabel({{ task.id }})">Add Priority</button>
                                 {% endif %}
 
+                                <!-- Tag Section -->
+                                <div class="task-tags">
+                                    {% for tagTask in task.tagTasks %}
+                                        <span class="tag">
+                                            {{ tagTask.tag.title }}
+                                            <button onclick="removeTag({{ task.id }}, {{ tagTask.tag.id }})">✕</button>
+                                        </span>
+                                    {% endfor %}
+                                    <div class="tag-input-container">
+                                        <input class="tag-input" type="text" id="tag-input-{{ task.id }}" placeholder="Type tag name" oninput="searchTags(this.value, {{ task.id }})">
+                                        <ul id="tag-dropdown-{{ task.id }}" class="tag-dropdown"></ul>
+                                    </div>
+                                    <button class="add-button" onclick="addTag({{ task.id }})">+ Add Tag</button>
+                                </div>
+
                                 <!-- Edit and delete task buttons -->
                                 <button class="edit-btn" onclick="editTask({{ task.id }})">Edit</button>
                                 <button class="delete-btn" onclick="deleteTask({{ task.id }})">Delete</button>
@@ -228,6 +243,68 @@
             });
         });
 
+
+        // Function to add a new tag to a task
+        async function addTag(taskId) {
+            // Get the input element for the specified task and retrieve the input value
+            const input = document.getElementById(`tag-input-${taskId}`);
+            const tagTitle = input.value.trim(); // Trim whitespace from the input value
+
+            // Check if the input is empty and alert the user if so
+            if (!tagTitle) {
+                alert("Tag title cannot be empty!");
+                return;
+            }
+
+            try {
+                // Send a POST request to the server to add a new tag
+                const response = await fetch(`/api/tag/${taskId}/add`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: tagTitle }), // Send the tag title as JSON in the request body
+                });
+
+                // Handle the server's response
+                if (response.ok) {
+                    // Parse the JSON response and extract the new tag data
+                    const data = await response.json();
+                    const tag = data.tag;
+
+                    // Update the UI to display the new tag
+                    const tagContainer = document.querySelector(`#task-${taskId} .task-tags`);
+                    const tagSpan = document.createElement("span"); // Create a new span element for the tag
+                    tagSpan.className = "tag"; // Add a class to style the tag
+                    tagSpan.innerHTML = `
+                ${tag.title}
+                <button onclick="removeTag(${taskId}, ${tag.id})">✕</button>
+            `;
+                    tagContainer.insertBefore(tagSpan, tagContainer.querySelector(".tag-input-container")); // Insert the tag before the input container
+
+                    input.value = ""; // Clear the input field
+                } else {
+                    // If the response is not successful, display an error message
+                    const error = await response.json();
+                    alert(error.error || "Failed to add tag.");
+                }
+            } catch (error) {
+                // Log and alert the user if an error occurs during the fetch operation
+                console.error("Error adding tag:", error);
+                alert("An error occurred while adding the tag.");
+            }
+        }
+
+        // Function to remove an existing tag from a task
+        async function removeTag(taskId, tagId) {
+            // Confirm with the user before proceeding with the tag removal
+            if (!confirm('Are you sure you want to remove this tag?')) return;
+
+            // Send a DELETE request to the server to remove the specified tag
+            const response = await fetch(`/api/tag/${taskId}/remove/${tagId}`, { method: 'DELETE' });
+
+            // If the response is successful, reload the page to update the UI
+            if (response.ok) location.reload();
+            else alert('Failed to remove tag.'); // Otherwise, display an error message
+        }
     </script>
 
     <!-- CSS Styles: Worst styling seen to the human eye -->
@@ -373,7 +450,7 @@
         .priority-label {
             color: #fff;
             padding: 1px 2px;
-            border-radius: 12px;
+            border-radius: 3px;
             font-size: 0.8rem;
             margin-right: 8px;
             display: inline-flex;
@@ -389,5 +466,78 @@
             font-weight: bold;
             font-size: 0.8rem;
         }
+
+        .task-tags .tag {
+            background-color: #d3d3d3;
+            border-radius: 3px;
+            padding: 1px 2px;
+            align-items: center;
+            display: inline-flex;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .task-tags .tag button {
+            background: none;
+            border: none;
+            margin-left: 4px;
+            cursor: pointer;
+        }
+
+        .tag-input-container {
+            position: relative; /* Ensure the dropdown is positioned relative to the container */
+        }
+
+        .tag-input {
+            flex-grow: 1; /* Make the input field take up available space */
+            padding: 8px; /* Add padding for better usability */
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .add-button {
+            padding: 8px 12px; /* Adjust padding for consistent size */
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .add-button:hover {
+            background-color: #0056b3; /* Add hover effect for better UX */
+        }
+
+        .tag-input-container {
+            position: relative; /* container for absolute children */
+        }
+
+        .tag-dropdown {
+            position: absolute;
+            bottom: 100%; /* position above the input */
+            left: 0;
+            width: 100%;
+            max-height: 150px; /* optional scroll height */
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            z-index: 9999; /* make sure it's on top */
+            margin-bottom: 6px; /* a lil breathing room between input and dropdown */
+        }
+
+        .tag-dropdown li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .tag-dropdown li:hover {
+            background-color: #f0f0f0;
+        }
+
     </style>
 {% endblock %}

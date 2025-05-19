@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\LaneRepository;
+use App\Repository\TagRepository;
 use App\Repository\TaskRepository;
 use App\Repository\PriorityRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -13,9 +14,13 @@ class BaseController extends AbstractController
 {
     // Displays the Kanban board with lanes and tasks
     #[Route('/kanban', name: 'kanban')]
-    public function index(LaneRepository $laneRepository, TaskRepository $taskRepository, PriorityRepository $priorityRepository): Response
+    public function index(
+        LaneRepository     $laneRepository,
+        TaskRepository     $taskRepository,
+        PriorityRepository $priorityRepository,
+        TagRepository      $tagRepository  // ADD THIS
+    ): Response
     {
-        // Fetch all lanes and tasks from the repositories
         $lanes = $laneRepository->findAll();
         $tasks = $taskRepository->findAll();
         $priorities = $priorityRepository->findAll();
@@ -28,11 +33,14 @@ class BaseController extends AbstractController
             ];
         }
 
-        // Render the kanban.html.twig template with lanes and tasks data
+        // **Fetch all tags explicitly here**
+        $allTags = $tagRepository->findAll();
+
         return $this->render('kanban.html.twig', [
             'lanes' => $lanes,
             'tasks' => $tasks,
             'priorities' => $priorityArray,
+            'allTags' => $allTags,  // <-- pass all tags for the frontend
         ]);
     }
 }
