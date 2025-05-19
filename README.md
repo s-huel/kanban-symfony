@@ -48,7 +48,7 @@ If you prefer to use a GUI tool like phpMyAdmin or Sequel Ace, you can create th
 1. Create a new database: ```kanban_db```.
 2. Configure the database connection in the .env file. (also see [example](.env.example))
 ```DATABASE_URL=mysql://username:password@127.0.0.1:3306/kanban_db?charset=utf8mb4```
-3. Import the sql file delivered with the repo: [kanban_board.sql](/public/db/kanban_db_2025-04-05.sql).
+3. Import the sql file delivered with the repo: [kanban_board.sql](/public/db/kanban_db.sql).
 
 ## Run the application
 1. Start the Symfony server after this you will be able to access the application:
@@ -71,6 +71,7 @@ The Kanban Board has four entities: User, Lane, Task and ActivityLog.
   - The user can delete the task by clicking on the "Delete" button of a task.
   - The user can move the task to an another lane drag-and-drop.
   - User can add priority label to the task (is added while creating task, can be removed or updated and added again).
+  - Users can add tags to their tasks. This is done by entering the tag name and clicking on the "Add Tag" button.
 4. **ActivityLog**: 
   - The user can see the activity log by clicking on the "Activity Log" button inside of the navigation bar.
   - The activity log shows the history of changes made to tasks and lanes.
